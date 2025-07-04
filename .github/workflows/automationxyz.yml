@@ -1,0 +1,123 @@
+name: CI & Test Results Notification
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the 'main' branch
+  pull_request:
+    branches:
+      - main # Trigger on pull requests targeting 'main'
+
+jobs:
+  # Job 1: Run the Java Selenium Tests
+  run_tests:
+    name: Run Selenium Tests
+    runs-on: ubuntu-latest # Execute on a fresh Ubuntu virtual machine
+
+    steps:
+      - name: ⬇ Checkout Repository
+        uses: actions/checkout@v4 # Action to check out your code from the repository
+        with:
+          fetch-depth: 0 # Fetch all history for proper context if needed
+
+      - name:  Setup Java Development Kit (JDK)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Specify your Java version (e.g., '11', '17', '21')
+          distribution: 'temurin' # Recommended distribution for GitHub Actions
+          cache: 'maven' # Cache Maven dependencies to speed up builds
+
+      - name:  Setup Chrome and ChromeDriver
+        uses: browser-actions/setup-chrome@latest # Action to install Chrome browser
+        with:
+          chrome-version: stable # Install the latest stable Chrome version
+
+      - name:  Build Project with Maven
+        run: mvn clean install -DskipTests # Build the project, skipping tests for now to ensure build success
+
+      - name:  Run Selenium Tests
+        # This step will execute your JUnit tests.
+        # Ensure your 'config.properties' has the correct 'base.url' for the application under test.
+        # Also, ensure your 'DriverFactory' is correctly configured to pick up ChromeDriver.
+        run: mvn test # Run all tests defined in your Maven project
+
+      - name:  Archive Test Results
+        # This step saves the test reports (e.g., Surefire reports) as workflow artifacts.
+        # Useful for later inspection or for other jobs to consume.
+        uses: actions/upload-artifact@v4
+        if: always() # Always run this step, even if tests fail
+        with:
+          name: test-results-surefire
+          path: target/surefire-reports/ # Path to your Surefire test reports
+
+  # Job 2: Send Slack Notification based on Test Results
+  slack_notification:
+    name: Send Slack Notification
+    needs: run_tests # This job depends on the 'run_tests' job completing
+    runs-on: ubuntu-latest
+
+    # This 'if' condition ensures the notification job always runs, regardless of test success or failure.
+    # We'll use the 'result' of the 'run_tests' job to determine the message.
+    if: always()
+
+    steps:
+      - name: Prepare Notification Message
+        id: set_message
+        run: |
+          TEST_STATUS="${{ needs.run_tests.result }}" # Get the outcome of the 'run_tests' job (success, failure, cancelled, skipped)
+          REPO_NAME="${{ github.repository }}"
+          COMMIT_SHA_SHORT="${{ github.sha_short }}"
+          RUN_ID="${{ github.run_id }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          if [ "$TEST_STATUS" == "success" ]; then
+            MESSAGE=" *${REPO_NAME}* CI/CD: Tests Passed! (Commit: ${COMMIT_SHA_SHORT})"
+            COLOR="good"
+          elif [ "$TEST_STATUS" == "failure" ]; then
+            MESSAGE=" *${REPO_NAME}* CI/CD: Tests Failed! (Commit: ${COMMIT_SHA_SHORT})"
+            COLOR="danger"
+          else
+            MESSAGE=" *${REPO_NAME}* CI/CD: Tests ${TEST_STATUS}! (Commit: ${COMMIT_SHA_SHORT})"
+            COLOR="warning"
+          fi
+          
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
+
+      - name:  Send Slack Notification
+        uses: slackapi/slack-github-action@v1.26.0 # Action to send messages to Slack
+        with:
+          # The message to send to Slack. We use the message prepared in the previous step.
+          payload: |
+            {
+              "text": "${{ steps.set_message.outputs.message }}",
+              "attachments": [
+                {
+                  "color": "${{ steps.set_message.outputs.color }}",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*Workflow Run Status:*\n${{ steps.set_message.outputs.message }}"
+                      }
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": "View Workflow Run",
+                          "url": "${{ steps.set_message.outputs.run_url }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          # This is the secret for your Slack webhook URL.
+          # You MUST create this secret in your GitHub repository settings.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
