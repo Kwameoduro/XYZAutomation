@@ -52,15 +52,12 @@ jobs:
 
   # Job 2: Send Slack Notification based on Test Results
   slack_notification:
-    name: Send Slack Notification
-    needs: run_tests # This job depends on the 'run_tests' job completing
-    runs-on: ubuntu-latest
+      name: Send Slack Notification
+      runs-on: ubuntu-latest
+      needs: test
+      if: always()
 
-    # This 'if' condition ensures the notification job always runs, regardless of test success or failure.
-    # We'll use the 'result' of the 'run_tests' job to determine the message.
-    if: always()
-
-    steps:
+      steps:
       - name: Prepare Notification Message
         id: set_message
         run: |
@@ -88,36 +85,10 @@ jobs:
       - name:  Send Slack Notification
         uses: slackapi/slack-github-action@v1.26.0 # Action to send messages to Slack
         with:
-          # The message to send to Slack. We use the message prepared in the previous step.
-          payload: |
-            {
-              "text": "${{ steps.set_message.outputs.message }}",
-              "attachments": [
-                {
-                  "color": "${{ steps.set_message.outputs.color }}",
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "*Workflow Run Status:*\n${{ steps.set_message.outputs.message }}"
-                      }
-                    },
-                    {
-                      "type": "actions",
-                      "elements": [
-                        {
-                          "type": "button",
-                          "text": "View Workflow Run",
-                          "url": "${{ steps.set_message.outputs.run_url }}"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          # This is the secret for your Slack webhook URL.
-          # You MUST create this secret in your GitHub repository settings.
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ needs.test.result }}
+          text: >
+            Selenium Java Tests *${{ needs.test.result == 'success' && 'PASSED' || 'FAILED' }}* 
+            in workflow _${{ github.workflow }}_ on branch `${{ github.ref_name }}`
+            👉 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>
+          env:
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
