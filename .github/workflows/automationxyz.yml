@@ -1,5 +1,6 @@
-name: XYZ Banking App Automation Testing
+name: XYZ Bank Test Automation with Allure
 
+# When to run this workflow
 on:
   push:
     branches: [ main, tester ]
@@ -120,7 +121,7 @@ jobs:
       - name:  Generate Test Summary
         if: always()
         run: |
-          echo "## 🏦 XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "##  XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
@@ -157,7 +158,7 @@ jobs:
           status: ${{ needs.test.result }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           text: |
-             XYZ Banking App Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+             XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
             
              Test Details:
             • Repository: ${{ github.repository }}
