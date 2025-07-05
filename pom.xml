@@ -7,87 +7,206 @@
     <groupId>com.xyzbank.app</groupId>
     <artifactId>XYZBankAutomation</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>XYZ Bank Test Automation</name>
+    <description>Selenium WebDriver Test Automation for XYZ Bank Application</description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency Versions -->
+        <selenium.version>4.15.0</selenium.version>
+        <junit.version>5.10.0</junit.version>
+        <webdrivermanager.version>5.6.2</webdrivermanager.version>
+        <allure.version>2.29.1</allure.version>
+        <aspectj.version>1.9.22</aspectj.version>
+        <slf4j.version>2.0.9</slf4j.version>
+        <logback.version>1.4.11</logback.version>
+
+        <!-- Plugin Versions -->
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
+        <allure.maven.plugin.version>2.12.0</allure.maven.plugin.version>
+        <allure.commandline.version>2.25.0</allure.commandline.version>
+    </properties>
 
     <dependencies>
+        <!-- Selenium WebDriver -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.20.0</version> </dependency>
+            <version>${selenium.version}</version>
+        </dependency>
 
+        <!-- WebDriverManager for automatic driver management -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>5.9.0</version> </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0</version> <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.0</version> <scope>test</scope>
+            <version>${webdrivermanager.version}</version>
         </dependency>
 
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Allure TestNG/JUnit 5 -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
-            <version>2.29.0</version> <scope>test</scope>
+            <version>${allure.version}</version>
+            <scope>test</scope>
         </dependency>
+
+        <!-- Allure Selenium integration -->
+
+        <!-- AspectJ Runtime for Allure -->
         <dependency>
             <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <version>1.9.22</version> <scope>test</scope>
+            <artifactId>aspectjrt</artifactId>
+            <version>${aspectj.version}</version>
         </dependency>
 
+        <!-- SLF4J API -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.13</version> <scope>test</scope>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
 
+        <!-- Logback Classic (SLF4J implementation) -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version> <configuration>
-                <source>11</source> <target>11</target> </configuration>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
             </plugin>
 
+            <!-- Maven Surefire Plugin for running tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version> <configuration>
-                <testFailureIgnore>true</testFailureIgnore>
-                <argLine>
-                    -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
-                </argLine>
-                <systemProperties>
-                    <property>
-                        <name>allure.results.directory</name>
-                        <value>${project.build.directory}/allure-results</value>
-                    </property>
-                </systemProperties>
-            </configuration>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                    </argLine>
+                    <systemProperties>
+                        <property>
+                            <name>allure.results.directory</name>
+                            <value>${project.build.directory}/allure-results</value>
+                        </property>
+                        <property>
+                            <name>junit.jupiter.extensions.autodetection.enabled</name>
+                            <value>true</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
-                        <version>1.9.22</version> </dependency>
+                        <version>${aspectj.version}</version>
+                    </dependency>
                 </dependencies>
             </plugin>
 
+            <!-- Allure Maven Plugin -->
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
-                <version>2.12.0</version> <configuration>
-                <reportVersion>2.29.0</reportVersion> <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
-            </configuration>
+                <version>${allure.maven.plugin.version}</version>
+                <configuration>
+                    <reportVersion>${allure.commandline.version}</reportVersion>
+                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
+                    <reportDirectory>${project.build.directory}/allure-report</reportDirectory>
+                    <installDirectory>${project.basedir}/.allure</installDirectory>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Site Plugin (for fallback reporting) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.12.1</version>
+            </plugin>
+
+            <!-- Maven Surefire Report Plugin (for fallback reporting) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Profile for running tests in different environments -->
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <test.environment>local</test.environment>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <properties>
+                <test.environment>ci</test.environment>
+            </properties>
+        </profile>
+
+        <!-- Profile for generating Allure report -->
+        <profile>
+            <id>allure-report</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.qameta.allure</groupId>
+                        <artifactId>allure-maven</artifactId>
+                        <version>${allure.maven.plugin.version}</version>
+                        <configuration>
+                            <reportVersion>${allure.commandline.version}</reportVersion>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>allure-report</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
