@@ -19,18 +19,18 @@ jobs:
 
     steps:
       # Step 1: Get the code from repository
-      - name: 📥 Checkout Code
+      - name:  Checkout Code
         uses: actions/checkout@v4
 
       # Step 2: Set up Java 21
-      - name: ☕ Set up Java 21
+      - name:  Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       # Step 3: Cache Maven dependencies (speeds up builds)
-      - name: 📦 Cache Maven Dependencies
+      - name:  Cache Maven Dependencies
         uses: actions/cache@v4
         with:
           path: ~/.m2
@@ -38,15 +38,15 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       # Step 4: Install Chrome browser (needed for Selenium)
-      - name: 🌐 Install Chrome Browser
+      - name:  Install Chrome Browser
         uses: browser-actions/setup-chrome@latest
 
       # Step 5: Download ChromeDriver automatically
-      - name: 🚗 Setup ChromeDriver
+      - name:  Setup ChromeDriver
         uses: nanasess/setup-chromedriver@master
 
       # Step 6: Verify Java and Maven versions
-      - name: 🔍 Verify Environment
+      - name:  Verify Environment
         run: |
           echo "Java version:"
           java -version
@@ -58,30 +58,30 @@ jobs:
           chromedriver --version
 
       # Step 7: Clean and compile the project
-      - name: 🧹 Clean and Compile
+      - name:  Clean and Compile
         run: |
-          echo "🧹 Cleaning project..."
+          echo " Cleaning project..."
           mvn clean
-          echo "🔨 Compiling project..."
+          echo " Compiling project..."
           mvn compile test-compile
 
       # Step 8: Run the Selenium tests
-      - name: 🧪 Run XYZ Bank Tests
+      - name:  Run XYZ Bank Tests
         run: |
-          echo "🚀 Starting XYZ Bank Selenium tests..."
+          echo " Starting XYZ Bank Selenium tests..."
           mvn test -Dheadless=true
         env:
           CHROME_OPTIONS: --headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080
 
       # Step 9: Generate Allure Report
-      - name: 📊 Generate Allure Report
+      - name:  Generate Allure Report
         if: always()
         run: |
-          echo "📊 Generating Allure report..."
+          echo " Generating Allure report..."
           mvn allure:report
 
       # Step 10: Upload Allure Results
-      - name: 📋 Upload Allure Results
+      - name:  Upload Allure Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -92,7 +92,7 @@ jobs:
           retention-days: 30
 
       # Step 11: Deploy Allure Report to GitHub Pages
-      - name: 🚀 Deploy Allure Report to GitHub Pages
+      - name:  Deploy Allure Report to GitHub Pages
         if: always() && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -101,7 +101,7 @@ jobs:
           destination_dir: allure-report-${{ github.run_number }}
 
       # Step 12: Upload Test Results (Surefire)
-      - name: 📊 Upload Surefire Test Results
+      - name:  Upload Surefire Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -110,7 +110,7 @@ jobs:
           retention-days: 30
 
       # Step 13: Upload Screenshots (if any test failures)
-      - name: 📸 Upload Screenshots
+      - name:  Upload Screenshots
         uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -119,10 +119,10 @@ jobs:
           retention-days: 7
 
       # Step 14: Generate Test Summary
-      - name: 📋 Generate Test Summary
+      - name:  Generate Test Summary
         if: always()
         run: |
-          echo "## 🏦 XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "##  XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
@@ -137,20 +137,10 @@ jobs:
             echo "- **Test Classes:** $TESTS" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # Add defect tracking info
-          echo "## 🐛 Defects Under Test" >> $GITHUB_STEP_SUMMARY
-          echo "| Defect ID | Priority | Description |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-398 | High | Name validation fails to reject numeric characters |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-400 | High | Special characters validation bypass |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-401 | High | Postal code accepts alphabetic characters |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-402 | Medium | Transaction filter Reset button not working |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-403 | Critical | Session not terminated after logout |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           
           # Add Allure report link if on main branch
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
+            echo "##  Test Reports" >> $GITHUB_STEP_SUMMARY
             echo "- **Allure Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
           fi
 
@@ -163,29 +153,23 @@ jobs:
 
     steps:
       # Step 1: Send Slack Notification
-      - name: 📱 Send Slack Notification
+      - name:  Send Slack Notification
         if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ needs.test.result }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           text: |
-            🏦 XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+             XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
             
-            📋 Test Details:
+             Test Details:
             • Repository: ${{ github.repository }}
             • Branch: ${{ github.ref_name }}
             • Commit: ${{ github.sha }}
             • Author: ${{ github.actor }}
             • Workflow: ${{ github.workflow }}
             
-            🐛 Defects Tested:
-            • Name validation (G2TML-398)
-            • Special characters bypass (G2TML-400) 
-            • Postal code validation (G2TML-401)
-            • Reset button issue (G2TML-402)
-            • Session security (G2TML-403)
             
-            🔗 View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+             View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
