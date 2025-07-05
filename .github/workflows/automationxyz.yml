@@ -137,17 +137,6 @@ jobs:
             echo "- **Test Classes:** $TESTS" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # Add defect tracking info
-          echo "## 🐛 Defects Under Test" >> $GITHUB_STEP_SUMMARY
-          echo "| Defect ID | Priority | Description |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-398 | High | Name validation fails to reject numeric characters |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-400 | High | Special characters validation bypass |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-401 | High | Postal code accepts alphabetic characters |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-402 | Medium | Transaction filter Reset button not working |" >> $GITHUB_STEP_SUMMARY
-          echo "| G2TML-403 | Critical | Session not terminated after logout |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
           # Add Allure report link if on main branch
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
