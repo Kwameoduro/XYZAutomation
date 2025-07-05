@@ -1,15 +1,13 @@
-# GitHub Actions CI Pipeline for XYZ Bank Selenium Tests with Allure Reporting
-name: XYZ Bank Test Automation with Allure
+name: XYZ Banking App Automation Testing
 
-# When to run this workflow
 on:
   push:
     branches: [ main, tester ]
   pull_request:
     branches: [ main ]
-  schedule:
-    # Run daily at 2 AM UTC for monitoring
-    - cron: '0 2 * * *'
+#  schedule:
+#    # Run daily at 2 AM UTC for monitoring
+#    - cron: '0 2 * * *'
 
 # Define the jobs to run
 jobs:
@@ -73,32 +71,32 @@ jobs:
         env:
           CHROME_OPTIONS: --headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080
 
-      # Step 9: Generate Allure Report
-      - name:  Generate Allure Report
-        if: always()
-        run: |
-          echo " Generating Allure report..."
-          mvn allure:report
-
-      # Step 10: Upload Allure Results
-      - name:  Upload Allure Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: allure-results-${{ github.run_number }}
-          path: |
-            target/allure-results/
-            target/site/allure-maven-plugin/
-          retention-days: 30
-
-      # Step 11: Deploy Allure Report to GitHub Pages
-      - name:  Deploy Allure Report to GitHub Pages
-        if: always() && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/site/allure-maven-plugin
-          destination_dir: allure-report-${{ github.run_number }}
+#      # Step 9: Generate Allure Report
+#      - name:  Generate Allure Report
+#        if: always()
+#        run: |
+#          echo " Generating Allure report..."
+#          mvn allure:report
+#
+#      # Step 10: Upload Allure Results
+#      - name:  Upload Allure Results
+#        uses: actions/upload-artifact@v4
+#        if: always()
+#        with:
+#          name: allure-results-${{ github.run_number }}
+#          path: |
+#            target/allure-results/
+#            target/site/allure-maven-plugin/
+#          retention-days: 30
+#
+#      # Step 11: Deploy Allure Report to GitHub Pages
+#      - name:  Deploy Allure Report to GitHub Pages
+#        if: always() && github.ref == 'refs/heads/main'
+#        uses: peaceiris/actions-gh-pages@v3
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          publish_dir: target/site/allure-maven-plugin
+#          destination_dir: allure-report-${{ github.run_number }}
 
       # Step 12: Upload Test Results (Surefire)
       - name:  Upload Surefire Test Results
@@ -108,15 +106,15 @@ jobs:
           name: surefire-reports-${{ github.run_number }}
           path: target/surefire-reports/
           retention-days: 30
-
-      # Step 13: Upload Screenshots (if any test failures)
-      - name:  Upload Screenshots
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: failure-screenshots-${{ github.run_number }}
-          path: screenshots/
-          retention-days: 7
+#
+#      # Step 13: Upload Screenshots (if any test failures)
+#      - name:  Upload Screenshots
+#        uses: actions/upload-artifact@v4
+#        if: failure()
+#        with:
+#          name: failure-screenshots-${{ github.run_number }}
+#          path: screenshots/
+#          retention-days: 7
 
       # Step 14: Generate Test Summary
       - name:  Generate Test Summary
@@ -139,7 +137,7 @@ jobs:
           
           # Add Allure report link if on main branch
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
+            echo "##  Test Reports" >> $GITHUB_STEP_SUMMARY
             echo "- **Allure Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
           fi
 
@@ -159,15 +157,15 @@ jobs:
           status: ${{ needs.test.result }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           text: |
-            🏦 XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+             XYZ Banking App Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
             
-            📋 Test Details:
+             Test Details:
             • Repository: ${{ github.repository }}
             • Branch: ${{ github.ref_name }}
             • Commit: ${{ github.sha }}
             • Author: ${{ github.actor }}
             • Workflow: ${{ github.workflow }}
             
-            🔗 View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+             View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
