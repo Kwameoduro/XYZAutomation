@@ -106,15 +106,15 @@ jobs:
           name: surefire-reports-${{ github.run_number }}
           path: target/surefire-reports/
           retention-days: 30
-#
-#      # Step 13: Upload Screenshots (if any test failures)
-#      - name:  Upload Screenshots
-#        uses: actions/upload-artifact@v4
-#        if: failure()
-#        with:
-#          name: failure-screenshots-${{ github.run_number }}
-#          path: screenshots/
-#          retention-days: 7
+
+      # Step 13: Upload Screenshots (if any test failures)
+      - name:  Upload Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-screenshots-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 7
 
       # Step 14: Generate Test Summary
       - name:  Generate Test Summary
