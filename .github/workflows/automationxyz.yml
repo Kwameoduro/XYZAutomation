@@ -71,32 +71,32 @@ jobs:
         env:
           CHROME_OPTIONS: --headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080
 
-#      # Step 9: Generate Allure Report
-#      - name:  Generate Allure Report
-#        if: always()
-#        run: |
-#          echo " Generating Allure report..."
-#          mvn allure:report
-#
-#      # Step 10: Upload Allure Results
-#      - name:  Upload Allure Results
-#        uses: actions/upload-artifact@v4
-#        if: always()
-#        with:
-#          name: allure-results-${{ github.run_number }}
-#          path: |
-#            target/allure-results/
-#            target/site/allure-maven-plugin/
-#          retention-days: 30
-#
-#      # Step 11: Deploy Allure Report to GitHub Pages
-#      - name:  Deploy Allure Report to GitHub Pages
-#        if: always() && github.ref == 'refs/heads/main'
-#        uses: peaceiris/actions-gh-pages@v3
-#        with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          publish_dir: target/site/allure-maven-plugin
-#          destination_dir: allure-report-${{ github.run_number }}
+      # Step 9: Generate Allure Report
+      - name:  Generate Allure Report
+        if: always()
+        run: |
+          echo " Generating Allure report..."
+          mvn allure:report
+
+      # Step 10: Upload Allure Results
+      - name:  Upload Allure Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-${{ github.run_number }}
+          path: |
+            target/allure-results/
+            target/site/allure-maven-plugin/
+          retention-days: 30
+
+      # Step 11: Deploy Allure Report to GitHub Pages
+      - name:  Deploy Allure Report to GitHub Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/site/allure-maven-plugin
+          destination_dir: allure-report-${{ github.run_number }}
 
       # Step 12: Upload Test Results (Surefire)
       - name:  Upload Surefire Test Results
