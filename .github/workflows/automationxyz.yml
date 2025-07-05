@@ -1,59 +1,191 @@
-name: Selenium Java Tests
+# GitHub Actions CI Pipeline for XYZ Bank Selenium Tests with Allure Reporting
+name: XYZ Bank Test Automation with Allure
 
+# When to run this workflow
 on:
   push:
-    branches: [ main ]
+    branches: [ main, tester ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC for monitoring
+    - cron: '0 2 * * *'
 
+# Define the jobs to run
 jobs:
   test:
+    name: Run XYZ Bank Selenium Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      # Step 1: Get the code from repository
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      # Step 2: Set up Java 21
+      - name: ☕ Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Set up Google Chrome
-        uses: browser-actions/setup-chrome@v1
-
-      - name: Cache Maven packages
-        uses: actions/cache@v3
+      # Step 3: Cache Maven dependencies (speeds up builds)
+      - name: 📦 Cache Maven Dependencies
+        uses: actions/cache@v4
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
 
-      - name: Run Tests and Save Logs
+      # Step 4: Install Chrome browser (needed for Selenium)
+      - name: 🌐 Install Chrome Browser
+        uses: browser-actions/setup-chrome@latest
+
+      # Step 5: Download ChromeDriver automatically
+      - name: 🚗 Setup ChromeDriver
+        uses: nanasess/setup-chromedriver@master
+
+      # Step 6: Verify Java and Maven versions
+      - name: 🔍 Verify Environment
         run: |
-          mvn clean test | tee test-output.log
+          echo "Java version:"
+          java -version
+          echo "Maven version:"
+          mvn -version
+          echo "Chrome version:"
+          google-chrome --version
+          echo "ChromeDriver version:"
+          chromedriver --version
 
-      - name: Upload Full Maven Logs
+      # Step 7: Clean and compile the project
+      - name: 🧹 Clean and Compile
+        run: |
+          echo "🧹 Cleaning project..."
+          mvn clean
+          echo "🔨 Compiling project..."
+          mvn compile test-compile
+
+      # Step 8: Run the Selenium tests
+      - name: 🧪 Run XYZ Bank Tests
+        run: |
+          echo "🚀 Starting XYZ Bank Selenium tests..."
+          mvn test -Dheadless=true
+        env:
+          CHROME_OPTIONS: --headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080
+
+      # Step 9: Generate Allure Report
+      - name: 📊 Generate Allure Report
+        if: always()
+        run: |
+          echo "📊 Generating Allure report..."
+          mvn allure:report
+
+      # Step 10: Upload Allure Results
+      - name: 📋 Upload Allure Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: maven-full-logs
-          path: test-output.log
+          name: allure-results-${{ github.run_number }}
+          path: |
+            target/allure-results/
+            target/site/allure-maven-plugin/
+          retention-days: 30
 
+      # Step 11: Deploy Allure Report to GitHub Pages
+      - name: 🚀 Deploy Allure Report to GitHub Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/site/allure-maven-plugin
+          destination_dir: allure-report-${{ github.run_number }}
+
+      # Step 12: Upload Test Results (Surefire)
+      - name: 📊 Upload Surefire Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports-${{ github.run_number }}
+          path: target/surefire-reports/
+          retention-days: 30
+
+      # Step 13: Upload Screenshots (if any test failures)
+      - name: 📸 Upload Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-screenshots-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 7
+
+      # Step 14: Generate Test Summary
+      - name: 📋 Generate Test Summary
+        if: always()
+        run: |
+          echo "## 🏦 XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner:** ${{ runner.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count test results if available
+          if [ -f target/surefire-reports/TEST-*.xml ]; then
+            TESTS=$(find target/surefire-reports -name "TEST-*.xml" -exec grep -l "testcase" {} \; | wc -l)
+            echo "- **Test Classes:** $TESTS" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add defect tracking info
+          echo "## 🐛 Defects Under Test" >> $GITHUB_STEP_SUMMARY
+          echo "| Defect ID | Priority | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| G2TML-398 | High | Name validation fails to reject numeric characters |" >> $GITHUB_STEP_SUMMARY
+          echo "| G2TML-400 | High | Special characters validation bypass |" >> $GITHUB_STEP_SUMMARY
+          echo "| G2TML-401 | High | Postal code accepts alphabetic characters |" >> $GITHUB_STEP_SUMMARY
+          echo "| G2TML-402 | Medium | Transaction filter Reset button not working |" >> $GITHUB_STEP_SUMMARY
+          echo "| G2TML-403 | Critical | Session not terminated after logout |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add Allure report link if on main branch
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
+            echo "- **Allure Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Slack notification job (runs after tests complete)
   notify:
-    name: Send Slack Notification
+    name: Send Notifications
     runs-on: ubuntu-latest
     needs: test
     if: always()
 
     steps:
-      - name: Post Slack Message
+      # Step 1: Send Slack Notification
+      - name: 📱 Send Slack Notification
+        if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ needs.test.result }}
-          text: >
-            Selenium Java Tests *${{ needs.test.result == 'success' && 'PASSED' || 'FAILED' }}* 
-            in workflow _${{ github.workflow }}_ on branch `${{ github.ref_name }}`
-            👉 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: |
+            🏦 XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+            
+            📋 Test Details:
+            • Repository: ${{ github.repository }}
+            • Branch: ${{ github.ref_name }}
+            • Commit: ${{ github.sha }}
+            • Author: ${{ github.actor }}
+            • Workflow: ${{ github.workflow }}
+            
+            🐛 Defects Tested:
+            • Name validation (G2TML-398)
+            • Special characters bypass (G2TML-400) 
+            • Postal code validation (G2TML-401)
+            • Reset button issue (G2TML-402)
+            • Session security (G2TML-403)
+            
+            🔗 View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
