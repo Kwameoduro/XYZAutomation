@@ -5,9 +5,9 @@ on:
     branches: [ main, tester ]
   pull_request:
     branches: [ main ]
-#  schedule:
-#    # Run daily at 2 AM UTC for monitoring
-#    - cron: '0 2 * * *'
+  schedule:
+    # Run daily at 2 AM UTC for monitoring
+    - cron: '0 2 * * *'
 
 # Define the jobs to run
 jobs:
