@@ -1,35 +1,27 @@
-# GitHub Actions CI Pipeline for XYZ Bank Selenium Tests with Allure Reporting
-name: XYZ Bank Test Automation with Allure
+#  CI Pipeline for XYZ Bank Selenium Tests
+name: XYZ Bank Test Automation
 
-# When to run this workflow
 on:
   push:
     branches: [ main, tester ]
   pull_request:
     branches: [ main ]
-  schedule:
-    # Run daily at 2 AM UTC for monitoring
-    - cron: '0 2 * * *'
 
-# Define the jobs to run
 jobs:
   test:
     name: Run XYZ Bank Selenium Tests
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Get the code from repository
-      - name:  Checkout Code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Java 21
-      - name:  Set up Java 21
+      - name: ☕ Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # Step 3: Cache Maven dependencies (speeds up builds)
       - name:  Cache Maven Dependencies
         uses: actions/cache@v4
         with:
@@ -37,51 +29,34 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # Step 4: Install Chrome browser (needed for Selenium)
       - name:  Install Chrome Browser
         uses: browser-actions/setup-chrome@latest
 
-      # Step 5: Download ChromeDriver automatically
       - name:  Setup ChromeDriver
         uses: nanasess/setup-chromedriver@master
 
-      # Step 6: Verify Java and Maven versions
       - name:  Verify Environment
         run: |
-          echo "Java version:"
           java -version
-          echo "Maven version:"
           mvn -version
-          echo "Chrome version:"
           google-chrome --version
-          echo "ChromeDriver version:"
           chromedriver --version
 
-      # Step 7: Clean and compile the project
       - name:  Clean and Compile
         run: |
-          echo " Cleaning project..."
           mvn clean
-          echo " Compiling project..."
           mvn compile test-compile
 
-      # Step 8: Run the Selenium tests
       - name:  Run XYZ Bank Tests
-        run: |
-          echo " Starting XYZ Bank Selenium tests..."
-          mvn test -Dheadless=true
+        run: mvn test -Dheadless=true
         env:
           CHROME_OPTIONS: --headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080
 
-      # Step 9: Generate Allure Report
       - name:  Generate Allure Report
         if: always()
-        run: |
-          echo " Generating Allure report..."
-          mvn allure:report
+        run: mvn allure:report
 
-      # Step 10: Upload Allure Results
-      - name:  Upload Allure Results
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -91,17 +66,7 @@ jobs:
             target/site/allure-maven-plugin/
           retention-days: 30
 
-      # Step 11: Deploy Allure Report to GitHub Pages
-      - name:  Deploy Allure Report to GitHub Pages
-        if: always() && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/site/allure-maven-plugin
-          destination_dir: allure-report-${{ github.run_number }}
-
-      # Step 12: Upload Test Results (Surefire)
-      - name:  Upload Surefire Test Results
+      - name: Upload Surefire Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -109,8 +74,7 @@ jobs:
           path: target/surefire-reports/
           retention-days: 30
 
-      # Step 13: Upload Screenshots (if any test failures)
-      - name:  Upload Screenshots
+      - name: Upload Screenshots
         uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -118,8 +82,7 @@ jobs:
           path: screenshots/
           retention-days: 7
 
-      # Step 14: Generate Test Summary
-      - name:  Generate Test Summary
+      - name: Generate Test Summary
         if: always()
         run: |
           echo "##  XYZ Bank Test Execution Summary" >> $GITHUB_STEP_SUMMARY
@@ -131,20 +94,11 @@ jobs:
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Count test results if available
           if [ -f target/surefire-reports/TEST-*.xml ]; then
             TESTS=$(find target/surefire-reports -name "TEST-*.xml" -exec grep -l "testcase" {} \; | wc -l)
             echo "- **Test Classes:** $TESTS" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          
-          # Add Allure report link if on main branch
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "##  Test Reports" >> $GITHUB_STEP_SUMMARY
-            echo "- **Allure Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report-${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
-          fi
 
-  # Slack notification job (runs after tests complete)
   notify:
     name: Send Notifications
     runs-on: ubuntu-latest
@@ -152,24 +106,22 @@ jobs:
     if: always()
 
     steps:
-      # Step 1: Send Slack Notification
-      - name:  Send Slack Notification
+      - name: Send Slack Notification
         if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ needs.test.result }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           text: |
-             XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+            XYZ Bank Tests ${{ needs.test.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
             
-             Test Details:
+            Test Details:
             • Repository: ${{ github.repository }}
             • Branch: ${{ github.ref_name }}
             • Commit: ${{ github.sha }}
             • Author: ${{ github.actor }}
             • Workflow: ${{ github.workflow }}
             
-            
-             View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
