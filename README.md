@@ -1,17 +1,9 @@
-#  Kwame Newsletter Automation Testing
+#  XYZ Bank APP Automation Testing
 
 This project contains an automated test suite for validating the core functionalities of the 
 [XYZ Bank App](https://www.globalsqa.com/angularJs-protractor/BankingProject/#/login) using **Java**, **Selenium WebDriver**, **JUnit 5**, and **GitHub Actions CI/CD**.
 
----
 
-##  Table of Contents
-
-- [About the Project](#about-the-project)
-- [Technologies Used](#technologies-used)
-- [Test Coverage](#test-coverage)
-
----
 
 ##  About the Project
 
@@ -21,7 +13,7 @@ This automation suite tests the **XYZ Bank App** pages to ensure:
 
 
 The tests use the **Page Object Model (POM)** for structure and maintainability, and are integrated into a **GitHub Actions** pipeline with Slack notifications.
----
+
 
 ##  Technologies Used
 
@@ -33,9 +25,6 @@ The tests use the **Page Object Model (POM)** for structure and maintainability,
 - **Slack Webhooks**
 - **Maven** for build and dependency management
 
----
-
----
 
 
 
